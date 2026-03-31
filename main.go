@@ -36,7 +36,7 @@ func main() {
 	}
 	admin := os.Getenv("ADMIN_KEY")
 	if admin == "" {
-		log.Fatal("ADMIN must be set")
+		log.Fatal("ADMIN_KEY must be set")
 	}
 	secret := os.Getenv("TOKEN_SECRET")
 	if secret == "" {
@@ -65,7 +65,7 @@ func main() {
 	mux.HandleFunc("DELETE /api/users", apiCfg.handlerUsersDelete)
 
 	mux.HandleFunc("POST /api/items", apiCfg.handlerItemsCreate)
-	mux.HandleFunc("PUT /api/items/{id}", apiCfg.handlerItemsUpdate)
+	mux.HandleFunc("PUT /api/items", apiCfg.handlerItemsUpdate)
 	mux.HandleFunc("DELETE /api/items/{id}", apiCfg.handlerItemsDelete)
 	mux.HandleFunc("GET /api/items", apiCfg.handlerItemsRetrieve)
 

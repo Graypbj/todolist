@@ -50,7 +50,7 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 		&claimsStruct,
 		func(t *jwt.Token) (any, error) {
 			if t.Method != jwt.SigningMethodHS256 {
-				return nil, fmt.Errorf("unexpected JWT signing method: %s", t.Header["algo"])
+				return nil, fmt.Errorf("unexpected JWT signing method: %s", t.Header["alg"])
 			}
 			return []byte(tokenSecret), nil
 		},
@@ -116,7 +116,7 @@ func GetAPIKey(headers http.Header) (string, error) {
 
 	const prefix = "ApiKey "
 	if !strings.HasPrefix(authHeader, prefix) {
-		return "", errors.New("Authorization header must start with 'ApiKey'")
+		return "", errors.New("Authorization header must start with 'ApiKey '")
 	}
 
 	apiKey := strings.TrimPrefix(authHeader, "ApiKey ")

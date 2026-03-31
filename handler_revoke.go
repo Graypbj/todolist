@@ -10,6 +10,7 @@ func (cfg *apiConfig) handlerRevoke(w http.ResponseWriter, r *http.Request) {
 	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Missing or invalid refresh token", err)
+		return
 	}
 
 	err = cfg.db.RevokeToken(r.Context(), token)
