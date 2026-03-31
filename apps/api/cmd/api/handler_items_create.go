@@ -5,22 +5,26 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Graypbj/internal/auth"
-	"github.com/Graypbj/internal/database"
+	"github.com/Graypbj/todolist/apps/api/internal/auth"
+	"github.com/Graypbj/todolist/apps/api/internal/database"
 	"github.com/google/uuid"
 )
 
-type List struct {
+type Item struct {
 	ID        uuid.UUID `json:"id"`
 	UserID    uuid.UUID `json:"user_id"`
+	ListID    uuid.UUID `json:"list_id"`
 	Name      string    `json:"name"`
+	Completed bool      `json:"completed"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (cfg *apiConfig) handlerListsCreate(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerItemsCreate(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Name string `json:"name"`
+		ListID    uuid.UUID `json:"list_id"`
+		Name      string    `json:"name"`
+		Completed bool      `json:"completed"`
 	}
 
 	token, err := auth.GetBearerToken(r.Header)
@@ -43,20 +47,23 @@ func (cfg *apiConfig) handlerListsCreate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	list, err := cfg.db.CreateList(r.Context(), database.CreateListParams{
-		UserID: userID,
-		Name:   params.Name,
+	item, err := cfg.db.CreateItem(r.Context(), database.CreateItemParams{
+		UserID:    userID,
+		ListID:    params.ListID,
+		Name:      params.Name,
+		Completed: params.Completed,
 	})
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't create list", err)
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create item", err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, List{
-		ID:        list.ID,
-		UserID:    list.UserID,
-		Name:      list.Name,
-		CreatedAt: list.CreatedAt,
-		UpdatedAt: list.UpdatedAt,
+	respondWithJSON(w, http.StatusCreated, Item{
+		ID:        item.ID,
+		UserID:    item.UserID,
+		ListID:    item.ListID,
+		Name:      item.Name,
+		CreatedAt: item.CreatedAt,
+		UpdatedAt: item.UpdatedAt,
 	})
 }

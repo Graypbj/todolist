@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Graypbj/internal/database"
+	"github.com/Graypbj/todolist/apps/api/internal/database"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
