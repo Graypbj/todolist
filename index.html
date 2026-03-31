@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<!--
+  index.html — Entry point for the TodoList frontend.
+
+  The Go backend's file server maps GET /app/* → files in the repo root,
+  so this file is reachable at http://localhost:8080/app/index.html
+  (and at http://localhost:8080/app/ because the Go file server auto-serves
+  index.html for directory requests).
+
+  The page has two top-level views that are swapped via JavaScript:
+    • #auth-section  — shown when no JWT token is stored (login / register)
+    • #app-section   — shown once the user is authenticated (the main app)
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TodoList</title>
+  <!-- External stylesheet — served from the same root directory -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ================================================================
+       AUTH SECTION
+       Displayed when the user is not logged in.
+       Contains a login form and a register form that toggle on demand.
+       ================================================================ -->
+  <div id="auth-section">
+    <div class="auth-card">
+      <h1 class="auth-title">TodoList</h1>
+
+      <!-- Error banner — hidden until an auth API call fails -->
+      <p id="auth-error" class="error-msg hidden"></p>
+
+      <!-- LOGIN FORM
+           Fields: email, password
+           On submit → POST /api/login -->
+      <form id="login-form">
+        <h2>Sign In</h2>
+        <label for="login-email">Email</label>
+        <input id="login-email" type="email" placeholder="you@example.com" required />
+
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" placeholder="••••••••" required />
+
+        <button type="submit" class="btn btn-primary">Sign In</button>
+        <p class="toggle-text">
+          Don't have an account?
+          <!-- Switches the visible form to #register-form -->
+          <button type="button" id="show-register" class="link-btn">Register</button>
+        </p>
+      </form>
+
+      <!-- REGISTER FORM
+           Fields: email, password, confirm password (client-side validation only)
+           On submit → POST /api/users, then auto-login with POST /api/login -->
+      <form id="register-form" class="hidden">
+        <h2>Create Account</h2>
+        <label for="reg-email">Email</label>
+        <input id="reg-email" type="email" placeholder="you@example.com" required />
+
+        <label for="reg-password">Password</label>
+        <input id="reg-password" type="password" placeholder="••••••••" required />
+
+        <label for="reg-confirm">Confirm Password</label>
+        <input id="reg-confirm" type="password" placeholder="••••••••" required />
+
+        <button type="submit" class="btn btn-primary">Create Account</button>
+        <p class="toggle-text">
+          Already have an account?
+          <button type="button" id="show-login" class="link-btn">Sign In</button>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       APP SECTION
+       Displayed once the user is authenticated.
+       Layout: header across the top, sidebar on the left, main panel right.
+       ================================================================ -->
+  <div id="app-section" class="hidden">
+
+    <!-- HEADER
+         Shows the logged-in user's email and a logout button. -->
+    <header class="app-header">
+      <span class="app-logo">📝 TodoList</span>
+      <div class="header-right">
+        <!-- Populated by JS with the user's email -->
+        <span id="user-email" class="user-email"></span>
+        <!-- Clicking logout clears stored tokens and returns to auth view -->
+        <button id="logout-btn" class="btn btn-secondary">Logout</button>
+      </div>
+    </header>
+
+    <div class="app-body">
+
+      <!-- SIDEBAR — Todo List management
+           Lists the user's todo lists.
+           Lets the user create a new list or delete an existing one.
+           Clicking a list name selects it and loads its items. -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2>My Lists</h2>
+        </div>
+
+        <!-- Error banner for list-related API failures -->
+        <p id="lists-error" class="error-msg hidden"></p>
+
+        <!-- Rendered list of todo lists (populated by JS) -->
+        <ul id="lists-container" class="lists-container"></ul>
+
+        <!-- NEW LIST FORM
+             Inline form at the bottom of the sidebar.
+             On submit → POST /api/lists -->
+        <form id="new-list-form" class="new-list-form">
+          <input
+            id="new-list-name"
+            type="text"
+            placeholder="New list name…"
+            required
+          />
+          <button type="submit" class="btn btn-primary btn-sm">Add</button>
+        </form>
+      </aside>
+
+      <!-- MAIN PANEL — Todo Item management
+           Shows items belonging to the currently selected list.
+           Lets the user create, toggle, and delete items. -->
+      <main class="main-panel">
+
+        <!-- Shown until the user selects a list -->
+        <div id="no-list-selected" class="empty-state">
+          <p>Select a list from the sidebar to get started.</p>
+        </div>
+
+        <!-- Shown once a list is selected (hidden by default) -->
+        <div id="list-detail" class="hidden">
+
+          <!-- Title of the selected list -->
+          <h2 id="selected-list-name" class="list-title"></h2>
+
+          <!-- Error banner for item-related API failures -->
+          <p id="items-error" class="error-msg hidden"></p>
+
+          <!-- NEW ITEM FORM
+               On submit → POST /api/items with the selected list's ID -->
+          <form id="new-item-form" class="new-item-form">
+            <input
+              id="new-item-name"
+              type="text"
+              placeholder="Add a new item…"
+              required
+            />
+            <button type="submit" class="btn btn-primary btn-sm">Add</button>
+          </form>
+
+          <!-- Rendered list of items (populated by JS) -->
+          <ul id="items-container" class="items-container"></ul>
+        </div>
+
+      </main>
+    </div><!-- /.app-body -->
+  </div><!-- /#app-section -->
+
+  <!-- ================================================================
+       APPLICATION LOGIC
+       All API calls, token management, and DOM manipulation live in
+       app.js.  Loaded at the bottom so all DOM elements exist first.
+       ================================================================ -->
+  <script src="app.js"></script>
+</body>
+</html>
