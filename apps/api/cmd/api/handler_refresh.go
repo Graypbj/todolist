@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Graypbj/internal/auth"
+	"github.com/Graypbj/todolist/apps/api/internal/auth"
 )
 
 func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {

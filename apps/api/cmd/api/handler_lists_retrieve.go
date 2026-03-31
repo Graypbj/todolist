@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/Graypbj/internal/auth"
+	"github.com/Graypbj/todolist/apps/api/internal/auth"
 )
 
 func (cfg *apiConfig) handlerListsRetrieve(w http.ResponseWriter, r *http.Request) {

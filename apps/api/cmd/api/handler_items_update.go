@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/Graypbj/internal/auth"
-	"github.com/Graypbj/internal/database"
+	"github.com/Graypbj/todolist/apps/api/internal/auth"
+	"github.com/Graypbj/todolist/apps/api/internal/database"
 	"github.com/google/uuid"
 )
 
