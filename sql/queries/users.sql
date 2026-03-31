@@ -14,9 +14,14 @@ SELECT * FROM users
 WHERE email = $1
 LIMIT 1;
 
--- name: UpdatUser :one
+-- name: UpdateUser :one
 UPDATE users
 SET hashed_password = $2, email = $3, updated_at = NOW()
 WHERE
 	id = $1
 RETURNING id, created_at, updated_at, email;
+
+-- name: DeleteUser :exec
+DELETE FROM users
+WHERE id = $1;
+

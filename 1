@@ -10,6 +10,7 @@ import (
 	"github.com/Graypbj/internal/database"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"google.golang.org/genproto/googleapis/api"
 )
 
 type apiConfig struct {
@@ -56,10 +57,6 @@ func main() {
 	mux.HandleFunc("POST /api/users", apiCfg.handlerUsersCreate)
 	mux.HandleFunc("PUT /api/users", apiCfg.handlerUsersUpdate)
 	mux.HandleFunc("DELETE /api/users", apiCfg.handlerUsersDelete)
-
-	mux.HandleFunc("POST /api/login", apiCfg.handlerLogin)
-	mux.HandleFunc("POST /api/refresh", apiCfg.handlerRefresh)
-	mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
 
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerCount)
