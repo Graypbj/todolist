@@ -11,6 +11,24 @@ import (
 	"github.com/google/uuid"
 )
 
+type Item struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	ListID    uuid.UUID
+	Name      string
+	Completed bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type List struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type RefreshToken struct {
 	Token     string
 	CreatedAt time.Time

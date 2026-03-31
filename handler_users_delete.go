@@ -26,5 +26,5 @@ func (cfg *apiConfig) handlerUsersDelete(w http.ResponseWriter, r *http.Request)
 	}
 
 	var a any
-	respondWithJSON(w, http.StatusOK, a)
+	respondWithJSON(w, http.StatusNoContent, a)
 }

@@ -1,0 +1,16 @@
+-- +goose Up
+CREATE TABLE items (
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	user_id UUID REFERENCES users(id)
+		ON DELETE CASCADE NOT NULL,
+	list_id UUID REFERENCES lists(id)
+		ON DELETE CASCADE NOT NULL,
+	name VARCHAR(100) NOT NULL,
+	completed BOOLEAN DEFAULT FALSE NOT NULL,
+	created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+	updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+
+-- +goose Down
+DROP TABLE items;
+
