@@ -37,10 +37,10 @@
 
 /**
  * Base URL for every API call.
- * All backend endpoints are under /api/… so we just use a relative path,
- * which works whether the server is on localhost:8080 or any other host.
+ * Points directly at the Go API server so requests work when the frontend
+ * is served by a separate static server (e.g. `serve` on port 3000).
  */
-const API_BASE = "/api";
+const API_BASE = "http://localhost:8080/api";
 
 /* localStorage key names — keeps key strings in one place */
 const STORAGE_TOKEN         = "todo_access_token";
