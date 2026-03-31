@@ -27,6 +27,12 @@ FROM items
 WHERE user_id = $1
 ORDER BY name ASC;
 
+-- name: ListItemsByList :many
+SELECT id, list_id, name, completed, created_at, updated_at
+FROM items
+WHERE user_id = $1 AND list_id = $2
+ORDER BY name ASC;
+
 -- name: GetItemByID :one
 SELECT id, list_id, name, completed, created_at, updated_at
 FROM items

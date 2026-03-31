@@ -57,6 +57,11 @@ func main() {
 	mux.HandleFunc("PUT /api/users", apiCfg.handlerUsersUpdate)
 	mux.HandleFunc("DELETE /api/users", apiCfg.handlerUsersDelete)
 
+	mux.HandleFunc("POST /api/items", apiCfg.handlerItemsCreate)
+	mux.HandleFunc("PUT /api/items", apiCfg.handlerItemsUpdate)
+	mux.HandleFunc("DELETE /api/items", apiCfg.handlerItemsDelete)
+	mux.HandleFunc("GET /api/items", apiCfg.handlerItemsRetrieve)
+
 	mux.HandleFunc("POST /api/lists", apiCfg.handlerListsCreate)
 	mux.HandleFunc("PUT /api/lists", apiCfg.handlerListsUpdate)
 	mux.HandleFunc("DELETE /api/lists", apiCfg.handlerListsDelete)

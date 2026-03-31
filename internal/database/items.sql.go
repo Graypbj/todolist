@@ -103,6 +103,57 @@ func (q *Queries) GetItemByID(ctx context.Context, arg GetItemByIDParams) (GetIt
 	return i, err
 }
 
+const listItemsByList = `-- name: ListItemsByList :many
+SELECT id, list_id, name, completed, created_at, updated_at
+FROM items
+WHERE user_id = $1 AND list_id = $2
+ORDER BY name ASC
+`
+
+type ListItemsByListParams struct {
+	UserID uuid.UUID
+	ListID uuid.UUID
+}
+
+type ListItemsByListRow struct {
+	ID        uuid.UUID
+	ListID    uuid.UUID
+	Name      string
+	Completed bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) ListItemsByList(ctx context.Context, arg ListItemsByListParams) ([]ListItemsByListRow, error) {
+	rows, err := q.db.QueryContext(ctx, listItemsByList, arg.UserID, arg.ListID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListItemsByListRow
+	for rows.Next() {
+		var i ListItemsByListRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ListID,
+			&i.Name,
+			&i.Completed,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listItemsByUser = `-- name: ListItemsByUser :many
 SELECT id, list_id, name, completed, created_at, updated_at
 FROM items
