@@ -48,7 +48,12 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		&claimsStruct,
-		func(t *jwt.Token) (interface{}, error) { return []byte(tokenSecret), nil },
+		func(t *jwt.Token) (any, error) {
+			if t.Method != jwt.SigningMethodHS256 {
+				return nil, fmt.Errorf("unexpected JWT signing method: %s", t.Header["algo"])
+			}
+			return []byte(tokenSecret), nil
+		},
 	)
 	if err != nil {
 		return uuid.Nil, err
@@ -81,8 +86,16 @@ func GetBearerToken(headers http.Header) (string, error) {
 		return "", errors.New("Authorization header not found")
 	}
 
-	authHeaderTrimmed := strings.TrimPrefix(authHeader, "Bearer ")
-	return authHeaderTrimmed, nil
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return "", errors.New("Authorization header must start with 'Bearer '")
+	}
+
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+	if strings.TrimSpace(token) == "" {
+		return "", errors.New("Bearer token is empty")
+	}
+
+	return token, nil
 }
 
 func MakeRefreshToken() (string, error) {
@@ -96,11 +109,16 @@ func MakeRefreshToken() (string, error) {
 }
 
 func GetAPIKey(headers http.Header) (string, error) {
-	apiKey := headers.Get("Authorization")
-	if apiKey == "" {
+	authHeader := headers.Get("Authorization")
+	if authHeader == "" {
 		return "", errors.New("Authorization header not found")
 	}
 
-	apiKeyTrimmed := strings.TrimPrefix(apiKey, "ApiKey ")
-	return apiKeyTrimmed, nil
+	const prefix = "ApiKey "
+	if !strings.HasPrefix(authHeader, prefix) {
+		return "", errors.New("Authorization header must start with 'ApiKey'")
+	}
+
+	apiKey := strings.TrimPrefix(authHeader, "ApiKey ")
+	return apiKey, nil
 }

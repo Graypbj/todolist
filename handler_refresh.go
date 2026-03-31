@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/Graypbj/internal/auth"
@@ -14,12 +13,11 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 		Token string `json:"token"`
 	}
 
-	if r.Header.Get("Authorization") == "" {
-		respondWithError(w, http.StatusBadRequest, "Missing refresh token", errors.New("No refresh token was sent"))
-		return
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Missing or invalid refresh token", err)
 	}
 
-	token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 	dbToken, err := cfg.db.GetToken(r.Context(), token)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Error finding refresh token in database", err)

@@ -1,19 +1,18 @@
 package main
 
 import (
-	"errors"
 	"net/http"
-	"strings"
+
+	"github.com/Graypbj/internal/auth"
 )
 
 func (cfg *apiConfig) handlerRevoke(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Authorization") == "" {
-		respondWithError(w, http.StatusBadRequest, "No token sent", errors.New("No token sent"))
-		return
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Missing or invalid refresh token", err)
 	}
 
-	token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-	err := cfg.db.RevokeToken(r.Context(), token)
+	err = cfg.db.RevokeToken(r.Context(), token)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't update token", err)
 		return

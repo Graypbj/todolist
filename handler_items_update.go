@@ -12,7 +12,6 @@ import (
 func (cfg *apiConfig) handlerItemsUpdate(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		ID        uuid.UUID `json:"id"`
-		ListID    uuid.UUID `json:"list_id"`
 		Name      string    `json:"name"`
 		Completed bool      `json:"completed"`
 	}
@@ -44,12 +43,11 @@ func (cfg *apiConfig) handlerItemsUpdate(w http.ResponseWriter, r *http.Request)
 	item, err := cfg.db.UpdateItemByID(r.Context(), database.UpdateItemByIDParams{
 		ID:        params.ID,
 		UserID:    userID,
-		ListID:    params.ListID,
 		Name:      params.Name,
 		Completed: params.Completed,
 	})
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't update exercise", err)
+		respondWithError(w, http.StatusInternalServerError, "Couldn't update item", err)
 		return
 	}
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/Graypbj/internal/auth"
@@ -10,11 +9,6 @@ import (
 )
 
 func (cfg *apiConfig) handlerItemsDelete(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		ID     uuid.UUID `json:"id"`
-		ListID uuid.UUID `json:"list_id"`
-	}
-
 	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT", err)
@@ -27,25 +21,25 @@ func (cfg *apiConfig) handlerItemsDelete(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err = decoder.Decode(&params)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't decode paramters", err)
+	idStr := r.PathValue("id")
+	if idStr == "" {
+		respondWithError(w, http.StatusBadRequest, "Missing item id in path", nil)
 		return
 	}
 
+	itemID, err := uuid.Parse(idStr)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid item id (must be UUID)", err)
+		return
+	}
 	err = cfg.db.DeleteItemByID(r.Context(), database.DeleteItemByIDParams{
-		ID:     params.ID,
+		ID:     itemID,
 		UserID: userID,
-		ListID: params.ListID,
 	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't delete item", err)
 		return
 	}
 
-	var a any
-
-	respondWithJSON(w, http.StatusNoContent, a)
+	w.WriteHeader(http.StatusNoContent)
 }

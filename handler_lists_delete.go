@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/Graypbj/internal/auth"
@@ -10,10 +9,6 @@ import (
 )
 
 func (cfg *apiConfig) handlerListsDelete(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		ID uuid.UUID `json:"id"`
-	}
-
 	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT", err)
@@ -26,16 +21,20 @@ func (cfg *apiConfig) handlerListsDelete(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err = decoder.Decode(&params)
+	idStr := r.PathValue("id")
+	if idStr == "" {
+		respondWithError(w, http.StatusBadRequest, "Missing list id in path", nil)
+		return
+	}
+
+	listID, err := uuid.Parse(idStr)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
+		respondWithError(w, http.StatusBadRequest, "Invalid list id (must be UUID)", err)
 		return
 	}
 
 	err = cfg.db.DeleteListByID(r.Context(), database.DeleteListByIDParams{
-		ID:     params.ID,
+		ID:     listID,
 		UserID: userID,
 	})
 	if err != nil {
@@ -43,6 +42,5 @@ func (cfg *apiConfig) handlerListsDelete(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var a any
-	respondWithJSON(w, http.StatusNoContent, a)
+	w.WriteHeader(http.StatusNoContent)
 }
