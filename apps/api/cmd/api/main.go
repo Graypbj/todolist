@@ -22,7 +22,7 @@ type apiConfig struct {
 }
 
 func main() {
-	const filePathRoot = "."
+	const filePathRoot = "../web"
 	const port = "8080"
 
 	godotenv.Load()
