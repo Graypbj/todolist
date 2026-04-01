@@ -40,12 +40,12 @@
  * Points directly at the Go API server so requests work when the frontend
  * is served by a separate static server (e.g. `serve` on port 3000).
  */
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = "http://localhost:8010/api";
 
 /* localStorage key names — keeps key strings in one place */
-const STORAGE_TOKEN         = "todo_access_token";
+const STORAGE_TOKEN = "todo_access_token";
 const STORAGE_REFRESH_TOKEN = "todo_refresh_token";
-const STORAGE_USER_EMAIL    = "todo_user_email";
+const STORAGE_USER_EMAIL = "todo_user_email";
 
 /* ═══════════════════════════════════════════════════════════════════════
    IN-MEMORY STATE
@@ -54,8 +54,8 @@ const STORAGE_USER_EMAIL    = "todo_user_email";
 
 /** @type {{ lists: Array, selectedListId: string|null }} */
 const state = {
-  lists: [],           // All todo-list objects for the current user
-  selectedListId: null // UUID of the list whose items are displayed
+	lists: [],           // All todo-list objects for the current user
+	selectedListId: null // UUID of the list whose items are displayed
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -72,7 +72,7 @@ const state = {
  * @returns {string|null}
  */
 function getToken() {
-  return localStorage.getItem(STORAGE_TOKEN);
+	return localStorage.getItem(STORAGE_TOKEN);
 }
 
 /**
@@ -94,52 +94,52 @@ function getToken() {
  *           or null when the response has no body (e.g. 204 No Content).
  */
 async function apiFetch(path, method, body, requiresAuth = true, isRetry = false) {
-  const headers = { "Content-Type": "application/json" };
+	const headers = { "Content-Type": "application/json" };
 
-  if (requiresAuth) {
-    const token = getToken();
-    if (token) {
-      // The backend expects:  Authorization: Bearer <jwt>
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-  }
+	if (requiresAuth) {
+		const token = getToken();
+		if (token) {
+			// The backend expects:  Authorization: Bearer <jwt>
+			headers["Authorization"] = `Bearer ${token}`;
+		}
+	}
 
-  const options = { method, headers };
-  if (body !== undefined) {
-    options.body = JSON.stringify(body);
-  }
+	const options = { method, headers };
+	if (body !== undefined) {
+		options.body = JSON.stringify(body);
+	}
 
-  const response = await fetch(API_BASE + path, options);
+	const response = await fetch(API_BASE + path, options);
 
-  // ── 401 Unauthorized ──────────────────────────────────────────────────
-  // The JWT may have expired. Attempt to get a new one using the refresh
-  // token, then retry the original request exactly once.
-  if (response.status === 401 && !isRetry) {
-    const refreshed = await refreshAccessToken();
-    if (refreshed) {
-      // Recurse with isRetry=true so we don't loop forever
-      return apiFetch(path, method, body, requiresAuth, true);
-    } else {
-      // Refresh also failed — force the user to log in again
-      logout();
-      return { ok: false, status: 401, data: null };
-    }
-  }
+	// ── 401 Unauthorized ──────────────────────────────────────────────────
+	// The JWT may have expired. Attempt to get a new one using the refresh
+	// token, then retry the original request exactly once.
+	if (response.status === 401 && !isRetry) {
+		const refreshed = await refreshAccessToken();
+		if (refreshed) {
+			// Recurse with isRetry=true so we don't loop forever
+			return apiFetch(path, method, body, requiresAuth, true);
+		} else {
+			// Refresh also failed — force the user to log in again
+			logout();
+			return { ok: false, status: 401, data: null };
+		}
+	}
 
-  // ── Parse response body ───────────────────────────────────────────────
-  // 204 No Content and some DELETEs return an empty body; guard against
-  // trying to parse empty JSON.
-  let data = null;
-  const text = await response.text();
-  if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = text; // Return raw text if it is not valid JSON
-    }
-  }
+	// ── Parse response body ───────────────────────────────────────────────
+	// 204 No Content and some DELETEs return an empty body; guard against
+	// trying to parse empty JSON.
+	let data = null;
+	const text = await response.text();
+	if (text) {
+		try {
+			data = JSON.parse(text);
+		} catch {
+			data = text; // Return raw text if it is not valid JSON
+		}
+	}
 
-  return { ok: response.ok, status: response.status, data };
+	return { ok: response.ok, status: response.status, data };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -158,27 +158,27 @@ async function apiFetch(path, method, body, requiresAuth = true, isRetry = false
  * @returns {Promise<string|null>} Error message string, or null on success.
  */
 async function login(email, password) {
-  const { ok, data } = await apiFetch(
-    "/login",
-    "POST",
-    { email, password },
-    false // login itself does not need a prior token
-  );
+	const { ok, data } = await apiFetch(
+		"/login",
+		"POST",
+		{ email, password },
+		false // login itself does not need a prior token
+	);
 
-  if (!ok) {
-    // The API returns { error: "…" } on failure
-    return data?.error || "Login failed. Please check your credentials.";
-  }
+	if (!ok) {
+		// The API returns { error: "…" } on failure
+		return data?.error || "Login failed. Please check your credentials.";
+	}
 
-  // Persist credentials so the user stays logged in after a page refresh
-  localStorage.setItem(STORAGE_TOKEN,         data.token);
-  localStorage.setItem(STORAGE_REFRESH_TOKEN, data.refresh_token);
-  localStorage.setItem(STORAGE_USER_EMAIL,    data.email);
+	// Persist credentials so the user stays logged in after a page refresh
+	localStorage.setItem(STORAGE_TOKEN, data.token);
+	localStorage.setItem(STORAGE_REFRESH_TOKEN, data.refresh_token);
+	localStorage.setItem(STORAGE_USER_EMAIL, data.email);
 
-  // Move to the main app
-  showApp(data.email);
-  await loadLists();
-  return null; // null = no error
+	// Move to the main app
+	showApp(data.email);
+	await loadLists();
+	return null; // null = no error
 }
 
 /**
@@ -192,19 +192,19 @@ async function login(email, password) {
  * @returns {Promise<string|null>} Error message string, or null on success.
  */
 async function register(email, password) {
-  const { ok, data } = await apiFetch(
-    "/users",
-    "POST",
-    { email, password },
-    false // registration does not need a prior token
-  );
+	const { ok, data } = await apiFetch(
+		"/users",
+		"POST",
+		{ email, password },
+		false // registration does not need a prior token
+	);
 
-  if (!ok) {
-    return data?.error || "Registration failed. That email may already be in use.";
-  }
+	if (!ok) {
+		return data?.error || "Registration failed. That email may already be in use.";
+	}
 
-  // Account created — log in with the same credentials
-  return login(email, password);
+	// Account created — log in with the same credentials
+	return login(email, password);
 }
 
 /**
@@ -216,24 +216,24 @@ async function register(email, password) {
  * @returns {Promise<boolean>} true if a new token was obtained, false otherwise.
  */
 async function refreshAccessToken() {
-  const refreshToken = localStorage.getItem(STORAGE_REFRESH_TOKEN);
-  if (!refreshToken) return false;
+	const refreshToken = localStorage.getItem(STORAGE_REFRESH_TOKEN);
+	if (!refreshToken) return false;
 
-  // The /api/refresh endpoint expects the *refresh* token, not the access token
-  const response = await fetch(`${API_BASE}/refresh`, {
-    method: "POST",
-    headers: {
-      "Content-Type":  "application/json",
-      "Authorization": `Bearer ${refreshToken}`
-    }
-  });
+	// The /api/refresh endpoint expects the *refresh* token, not the access token
+	const response = await fetch(`${API_BASE}/refresh`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			"Authorization": `Bearer ${refreshToken}`
+		}
+	});
 
-  if (!response.ok) return false;
+	if (!response.ok) return false;
 
-  const data = await response.json();
-  // Replace the expired access token with the new one
-  localStorage.setItem(STORAGE_TOKEN, data.token);
-  return true;
+	const data = await response.json();
+	// Replace the expired access token with the new one
+	localStorage.setItem(STORAGE_TOKEN, data.token);
+	return true;
 }
 
 /**
@@ -243,28 +243,28 @@ async function refreshAccessToken() {
  * fail if this request errors), clears localStorage, and shows the auth screen.
  */
 async function logout() {
-  const refreshToken = localStorage.getItem(STORAGE_REFRESH_TOKEN);
+	const refreshToken = localStorage.getItem(STORAGE_REFRESH_TOKEN);
 
-  // Revoke the refresh token so it can't be used again, even after logout.
-  // We fire-and-forget this; if it fails (e.g. network error) we still log out.
-  if (refreshToken) {
-    fetch(`${API_BASE}/revoke`, {
-      method:  "POST",
-      headers: { "Authorization": `Bearer ${refreshToken}` }
-    }).catch(() => {}); // swallow errors intentionally
-  }
+	// Revoke the refresh token so it can't be used again, even after logout.
+	// We fire-and-forget this; if it fails (e.g. network error) we still log out.
+	if (refreshToken) {
+		fetch(`${API_BASE}/revoke`, {
+			method: "POST",
+			headers: { "Authorization": `Bearer ${refreshToken}` }
+		}).catch(() => { }); // swallow errors intentionally
+	}
 
-  // Clear all persisted auth data
-  localStorage.removeItem(STORAGE_TOKEN);
-  localStorage.removeItem(STORAGE_REFRESH_TOKEN);
-  localStorage.removeItem(STORAGE_USER_EMAIL);
+	// Clear all persisted auth data
+	localStorage.removeItem(STORAGE_TOKEN);
+	localStorage.removeItem(STORAGE_REFRESH_TOKEN);
+	localStorage.removeItem(STORAGE_USER_EMAIL);
 
-  // Reset in-memory state
-  state.lists = [];
-  state.selectedListId = null;
+	// Reset in-memory state
+	state.lists = [];
+	state.selectedListId = null;
 
-  // Return to the auth screen
-  showAuth();
+	// Return to the auth screen
+	showAuth();
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -319,16 +319,16 @@ async function deleteUser() {
  * then re-render the sidebar.
  */
 async function loadLists() {
-  const { ok, data } = await apiFetch("/lists", "GET");
+	const { ok, data } = await apiFetch("/lists", "GET");
 
-  if (!ok) {
-    showListsError(data?.error || "Could not load lists.");
-    return;
-  }
+	if (!ok) {
+		showListsError(data?.error || "Could not load lists.");
+		return;
+	}
 
-  // data is an array of list objects: [{ id, name, user_id, … }, …]
-  state.lists = data || [];
-  renderLists();
+	// data is an array of list objects: [{ id, name, user_id, … }, …]
+	state.lists = data || [];
+	renderLists();
 }
 
 /**
@@ -340,19 +340,19 @@ async function loadLists() {
  * @param {string} name - Display name for the new list
  */
 async function createList(name) {
-  const { ok, data } = await apiFetch("/lists", "POST", { name });
+	const { ok, data } = await apiFetch("/lists", "POST", { name });
 
-  if (!ok) {
-    showListsError(data?.error || "Could not create list.");
-    return;
-  }
+	if (!ok) {
+		showListsError(data?.error || "Could not create list.");
+		return;
+	}
 
-  // Append to local state to avoid a full reload
-  state.lists.push(data);
-  renderLists();
+	// Append to local state to avoid a full reload
+	state.lists.push(data);
+	renderLists();
 
-  // Automatically open the newly created list
-  selectList(data.id, data.name);
+	// Automatically open the newly created list
+	selectList(data.id, data.name);
 }
 
 /**
@@ -365,23 +365,23 @@ async function createList(name) {
  * @param {string} listId - UUID of the list to delete
  */
 async function deleteList(listId) {
-  const { ok, data } = await apiFetch(`/lists/${listId}`, "DELETE");
+	const { ok, data } = await apiFetch(`/lists/${listId}`, "DELETE");
 
-  if (!ok) {
-    showListsError(data?.error || "Could not delete list.");
-    return;
-  }
+	if (!ok) {
+		showListsError(data?.error || "Could not delete list.");
+		return;
+	}
 
-  // Remove from local state
-  state.lists = state.lists.filter(l => l.id !== listId);
+	// Remove from local state
+	state.lists = state.lists.filter(l => l.id !== listId);
 
-  // If the deleted list was being viewed, clear the main panel
-  if (state.selectedListId === listId) {
-    state.selectedListId = null;
-    showNoListSelected();
-  }
+	// If the deleted list was being viewed, clear the main panel
+	if (state.selectedListId === listId) {
+		state.selectedListId = null;
+		showNoListSelected();
+	}
 
-  renderLists();
+	renderLists();
 }
 
 /**
@@ -424,15 +424,15 @@ async function renameList(listId, newName) {
  * @param {string} listId - UUID of the parent list
  */
 async function loadItems(listId) {
-  const { ok, data } = await apiFetch(`/items?list_id=${listId}`, "GET");
+	const { ok, data } = await apiFetch(`/items?list_id=${listId}`, "GET");
 
-  if (!ok) {
-    showItemsError(data?.error || "Could not load items.");
-    return;
-  }
+	if (!ok) {
+		showItemsError(data?.error || "Could not load items.");
+		return;
+	}
 
-  // data is an array: [{ id, name, completed, list_id, … }, …]
-  renderItems(data || []);
+	// data is an array: [{ id, name, completed, list_id, … }, …]
+	renderItems(data || []);
 }
 
 /**
@@ -443,21 +443,21 @@ async function loadItems(listId) {
  * @param {string} name - Display name for the new item
  */
 async function createItem(name) {
-  if (!state.selectedListId) return;
+	if (!state.selectedListId) return;
 
-  const { ok, data } = await apiFetch("/items", "POST", {
-    list_id:   state.selectedListId,
-    name,
-    completed: false
-  });
+	const { ok, data } = await apiFetch("/items", "POST", {
+		list_id: state.selectedListId,
+		name,
+		completed: false
+	});
 
-  if (!ok) {
-    showItemsError(data?.error || "Could not create item.");
-    return;
-  }
+	if (!ok) {
+		showItemsError(data?.error || "Could not create item.");
+		return;
+	}
 
-  // Reload so the new item is shown with its server-assigned ID
-  await loadItems(state.selectedListId);
+	// Reload so the new item is shown with its server-assigned ID
+	await loadItems(state.selectedListId);
 }
 
 /**
@@ -471,19 +471,19 @@ async function createItem(name) {
  * @param {boolean} completed - Current completed value (will be flipped)
  */
 async function toggleItem(itemId, name, completed) {
-  const { ok, data } = await apiFetch("/items", "PUT", {
-    id:        itemId,
-    name,
-    completed: !completed // flip the completed flag
-  });
+	const { ok, data } = await apiFetch("/items", "PUT", {
+		id: itemId,
+		name,
+		completed: !completed // flip the completed flag
+	});
 
-  if (!ok) {
-    showItemsError(data?.error || "Could not update item.");
-    return;
-  }
+	if (!ok) {
+		showItemsError(data?.error || "Could not update item.");
+		return;
+	}
 
-  // Reload to reflect the updated state from the server
-  await loadItems(state.selectedListId);
+	// Reload to reflect the updated state from the server
+	await loadItems(state.selectedListId);
 }
 
 /**
@@ -494,14 +494,14 @@ async function toggleItem(itemId, name, completed) {
  * @param {string} itemId - UUID of the item to delete
  */
 async function deleteItem(itemId) {
-  const { ok, data } = await apiFetch(`/items/${itemId}`, "DELETE");
+	const { ok, data } = await apiFetch(`/items/${itemId}`, "DELETE");
 
-  if (!ok) {
-    showItemsError(data?.error || "Could not delete item.");
-    return;
-  }
+	if (!ok) {
+		showItemsError(data?.error || "Could not delete item.");
+		return;
+	}
 
-  await loadItems(state.selectedListId);
+	await loadItems(state.selectedListId);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -514,22 +514,23 @@ async function deleteItem(itemId) {
  * Clears the current contents and rebuilds from scratch.
  */
 function renderLists() {
-  const container = document.getElementById("lists-container");
-  container.innerHTML = ""; // clear previous entries
+	const container = document.getElementById("lists-container");
+	container.innerHTML = ""; // clear previous entries
 
-  state.lists.forEach(list => {
-    // <li class="list-item [active]">
-    //   <span class="list-item-name">Name</span>
-    //   <button class="btn btn-danger">✕</button>
-    // </li>
-    const li = document.createElement("li");
-    li.className = "list-item" + (list.id === state.selectedListId ? " active" : "");
-    li.dataset.id = list.id; // store UUID for event delegation
+	state.lists.forEach(list => {
+		// <li class="list-item [active]">
+		//   <span class="list-item-name">Name</span>
+		//   <button class="btn btn-danger">✕</button>
+		// </li>
+		const li = document.createElement("li");
+		li.className = "list-item" + (list.id === state.selectedListId ? " active" : "");
+		li.dataset.id = list.id; // store UUID for event delegation
 
-    const nameSpan = document.createElement("span");
-    nameSpan.className = "list-item-name";
-    nameSpan.textContent = list.name;
+		const nameSpan = document.createElement("span");
+		nameSpan.className = "list-item-name";
+		nameSpan.textContent = list.name;
 
+<<<<<<< HEAD
     // Inline rename input — shown when the user clicks the rename button
     const renameInput = document.createElement("input");
     renameInput.type      = "text";
@@ -546,10 +547,17 @@ function renderLists() {
     deleteBtn.className = "btn btn-danger btn-sm";
     deleteBtn.setAttribute("aria-label", `Delete list "${list.name}"`);
     deleteBtn.textContent = "✕";
+=======
+		const deleteBtn = document.createElement("button");
+		deleteBtn.className = "btn btn-danger btn-sm";
+		deleteBtn.setAttribute("aria-label", `Delete list "${list.name}"`);
+		deleteBtn.textContent = "✕";
+>>>>>>> adae53b (Update 8080 to 8010)
 
-    // Clicking the name selects the list
-    nameSpan.addEventListener("click", () => selectList(list.id, list.name));
+		// Clicking the name selects the list
+		nameSpan.addEventListener("click", () => selectList(list.id, list.name));
 
+<<<<<<< HEAD
     // Clicking ✎ switches to rename mode
     renameBtn.addEventListener("click", e => {
       e.stopPropagation();
@@ -588,6 +596,18 @@ function renderLists() {
     li.appendChild(deleteBtn);
     container.appendChild(li);
   });
+=======
+		// Clicking ✕ deletes the list (stop propagation so it doesn't also select it)
+		deleteBtn.addEventListener("click", e => {
+			e.stopPropagation();
+			deleteList(list.id);
+		});
+
+		li.appendChild(nameSpan);
+		li.appendChild(deleteBtn);
+		container.appendChild(li);
+	});
+>>>>>>> adae53b (Update 8080 to 8010)
 }
 
 /**
@@ -601,52 +621,52 @@ function renderLists() {
  * @param {Array} items - Array of item objects from the API
  */
 function renderItems(items) {
-  const container = document.getElementById("items-container");
-  container.innerHTML = ""; // clear previous entries
+	const container = document.getElementById("items-container");
+	container.innerHTML = ""; // clear previous entries
 
-  if (items.length === 0) {
-    const empty = document.createElement("li");
-    empty.style.cssText = "color:var(--color-text-muted);font-size:var(--text-sm);padding:8px 0";
-    empty.textContent = "No items yet. Add one above!";
-    container.appendChild(empty);
-    return;
-  }
+	if (items.length === 0) {
+		const empty = document.createElement("li");
+		empty.style.cssText = "color:var(--color-text-muted);font-size:var(--text-sm);padding:8px 0";
+		empty.textContent = "No items yet. Add one above!";
+		container.appendChild(empty);
+		return;
+	}
 
-  items.forEach(item => {
-    // <li class="item [completed]">
-    //   <input type="checkbox" class="item-checkbox" [checked]>
-    //   <span class="item-name">Name</span>
-    //   <button class="btn btn-danger btn-sm">✕</button>
-    // </li>
-    const li = document.createElement("li");
-    li.className = "item" + (item.completed ? " completed" : "");
+	items.forEach(item => {
+		// <li class="item [completed]">
+		//   <input type="checkbox" class="item-checkbox" [checked]>
+		//   <span class="item-name">Name</span>
+		//   <button class="btn btn-danger btn-sm">✕</button>
+		// </li>
+		const li = document.createElement("li");
+		li.className = "item" + (item.completed ? " completed" : "");
 
-    const checkbox = document.createElement("input");
-    checkbox.type      = "checkbox";
-    checkbox.className = "item-checkbox";
-    checkbox.checked   = item.completed;
-    checkbox.setAttribute("aria-label", `Mark "${item.name}" as ${item.completed ? "incomplete" : "complete"}`);
+		const checkbox = document.createElement("input");
+		checkbox.type = "checkbox";
+		checkbox.className = "item-checkbox";
+		checkbox.checked = item.completed;
+		checkbox.setAttribute("aria-label", `Mark "${item.name}" as ${item.completed ? "incomplete" : "complete"}`);
 
-    // Toggling the checkbox flips the item's completed state on the server
-    checkbox.addEventListener("change", () => {
-      toggleItem(item.id, item.name, item.completed);
-    });
+		// Toggling the checkbox flips the item's completed state on the server
+		checkbox.addEventListener("change", () => {
+			toggleItem(item.id, item.name, item.completed);
+		});
 
-    const nameSpan = document.createElement("span");
-    nameSpan.className   = "item-name";
-    nameSpan.textContent = item.name;
+		const nameSpan = document.createElement("span");
+		nameSpan.className = "item-name";
+		nameSpan.textContent = item.name;
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "btn btn-danger btn-sm";
-    deleteBtn.setAttribute("aria-label", `Delete item "${item.name}"`);
-    deleteBtn.textContent = "✕";
-    deleteBtn.addEventListener("click", () => deleteItem(item.id));
+		const deleteBtn = document.createElement("button");
+		deleteBtn.className = "btn btn-danger btn-sm";
+		deleteBtn.setAttribute("aria-label", `Delete item "${item.name}"`);
+		deleteBtn.textContent = "✕";
+		deleteBtn.addEventListener("click", () => deleteItem(item.id));
 
-    li.appendChild(checkbox);
-    li.appendChild(nameSpan);
-    li.appendChild(deleteBtn);
-    container.appendChild(li);
-  });
+		li.appendChild(checkbox);
+		li.appendChild(nameSpan);
+		li.appendChild(deleteBtn);
+		container.appendChild(li);
+	});
 }
 
 /**
@@ -657,20 +677,20 @@ function renderItems(items) {
  * @param {string} listName - Display name to show as the panel title
  */
 function selectList(listId, listName) {
-  state.selectedListId = listId;
+	state.selectedListId = listId;
 
-  // Update active highlight in the sidebar
-  renderLists();
+	// Update active highlight in the sidebar
+	renderLists();
 
-  // Show the detail panel and set its title
-  document.getElementById("no-list-selected").classList.add("hidden");
-  document.getElementById("list-detail").classList.remove("hidden");
-  document.getElementById("selected-list-name").textContent = listName;
+	// Show the detail panel and set its title
+	document.getElementById("no-list-selected").classList.add("hidden");
+	document.getElementById("list-detail").classList.remove("hidden");
+	document.getElementById("selected-list-name").textContent = listName;
 
-  // Clear any stale items and load fresh ones
-  document.getElementById("items-container").innerHTML = "";
-  clearItemsError();
-  loadItems(listId);
+	// Clear any stale items and load fresh ones
+	document.getElementById("items-container").innerHTML = "";
+	clearItemsError();
+	loadItems(listId);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -679,9 +699,9 @@ function selectList(listId, listName) {
 
 /** Show the auth section, hide the app section. */
 function showAuth() {
-  document.getElementById("auth-section").classList.remove("hidden");
-  document.getElementById("app-section").classList.add("hidden");
-  clearAuthError();
+	document.getElementById("auth-section").classList.remove("hidden");
+	document.getElementById("app-section").classList.add("hidden");
+	clearAuthError();
 }
 
 /**
@@ -689,16 +709,16 @@ function showAuth() {
  * @param {string} email - User's email, displayed in the header.
  */
 function showApp(email) {
-  document.getElementById("auth-section").classList.add("hidden");
-  document.getElementById("app-section").classList.remove("hidden");
-  document.getElementById("user-email").textContent = email;
-  showNoListSelected();
+	document.getElementById("auth-section").classList.add("hidden");
+	document.getElementById("app-section").classList.remove("hidden");
+	document.getElementById("user-email").textContent = email;
+	showNoListSelected();
 }
 
 /** Show the "select a list" placeholder in the main panel. */
 function showNoListSelected() {
-  document.getElementById("no-list-selected").classList.remove("hidden");
-  document.getElementById("list-detail").classList.add("hidden");
+	document.getElementById("no-list-selected").classList.remove("hidden");
+	document.getElementById("list-detail").classList.add("hidden");
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -706,30 +726,30 @@ function showNoListSelected() {
    ───────────────────────────────────────────────────────────── */
 
 function showAuthError(msg) {
-  const el = document.getElementById("auth-error");
-  el.textContent = msg;
-  el.classList.remove("hidden");
+	const el = document.getElementById("auth-error");
+	el.textContent = msg;
+	el.classList.remove("hidden");
 }
 function clearAuthError() {
-  document.getElementById("auth-error").classList.add("hidden");
+	document.getElementById("auth-error").classList.add("hidden");
 }
 
 function showListsError(msg) {
-  const el = document.getElementById("lists-error");
-  el.textContent = msg;
-  el.classList.remove("hidden");
+	const el = document.getElementById("lists-error");
+	el.textContent = msg;
+	el.classList.remove("hidden");
 }
 function clearListsError() {
-  document.getElementById("lists-error").classList.add("hidden");
+	document.getElementById("lists-error").classList.add("hidden");
 }
 
 function showItemsError(msg) {
-  const el = document.getElementById("items-error");
-  el.textContent = msg;
-  el.classList.remove("hidden");
+	const el = document.getElementById("items-error");
+	el.textContent = msg;
+	el.classList.remove("hidden");
 }
 function clearItemsError() {
-  document.getElementById("items-error").classList.add("hidden");
+	document.getElementById("items-error").classList.add("hidden");
 }
 
 function showAccountError(msg) {
@@ -773,57 +793,58 @@ function hideAccountPanel() {
 
 function wireEvents() {
 
-  /* ── Toggle between login and register forms ───────────────────────── */
+	/* ── Toggle between login and register forms ───────────────────────── */
 
-  document.getElementById("show-register").addEventListener("click", () => {
-    document.getElementById("login-form").classList.add("hidden");
-    document.getElementById("register-form").classList.remove("hidden");
-    clearAuthError();
-  });
+	document.getElementById("show-register").addEventListener("click", () => {
+		document.getElementById("login-form").classList.add("hidden");
+		document.getElementById("register-form").classList.remove("hidden");
+		clearAuthError();
+	});
 
-  document.getElementById("show-login").addEventListener("click", () => {
-    document.getElementById("register-form").classList.add("hidden");
-    document.getElementById("login-form").classList.remove("hidden");
-    clearAuthError();
-  });
+	document.getElementById("show-login").addEventListener("click", () => {
+		document.getElementById("register-form").classList.add("hidden");
+		document.getElementById("login-form").classList.remove("hidden");
+		clearAuthError();
+	});
 
-  /* ── Login form submit ─────────────────────────────────────────────── */
+	/* ── Login form submit ─────────────────────────────────────────────── */
 
-  document.getElementById("login-form").addEventListener("submit", async e => {
-    e.preventDefault(); // prevent the browser's default form submission
-    clearAuthError();
+	document.getElementById("login-form").addEventListener("submit", async e => {
+		e.preventDefault(); // prevent the browser's default form submission
+		clearAuthError();
 
-    const email    = document.getElementById("login-email").value.trim();
-    const password = document.getElementById("login-password").value;
+		const email = document.getElementById("login-email").value.trim();
+		const password = document.getElementById("login-password").value;
 
-    const error = await login(email, password);
-    if (error) showAuthError(error);
-  });
+		const error = await login(email, password);
+		if (error) showAuthError(error);
+	});
 
-  /* ── Register form submit ──────────────────────────────────────────── */
+	/* ── Register form submit ──────────────────────────────────────────── */
 
-  document.getElementById("register-form").addEventListener("submit", async e => {
-    e.preventDefault();
-    clearAuthError();
+	document.getElementById("register-form").addEventListener("submit", async e => {
+		e.preventDefault();
+		clearAuthError();
 
-    const email    = document.getElementById("reg-email").value.trim();
-    const password = document.getElementById("reg-password").value;
-    const confirm  = document.getElementById("reg-confirm").value;
+		const email = document.getElementById("reg-email").value.trim();
+		const password = document.getElementById("reg-password").value;
+		const confirm = document.getElementById("reg-confirm").value;
 
-    // Client-side validation: passwords must match before hitting the API
-    if (password !== confirm) {
-      showAuthError("Passwords do not match.");
-      return;
-    }
+		// Client-side validation: passwords must match before hitting the API
+		if (password !== confirm) {
+			showAuthError("Passwords do not match.");
+			return;
+		}
 
-    const error = await register(email, password);
-    if (error) showAuthError(error);
-  });
+		const error = await register(email, password);
+		if (error) showAuthError(error);
+	});
 
-  /* ── Logout button ─────────────────────────────────────────────────── */
+	/* ── Logout button ─────────────────────────────────────────────────── */
 
-  document.getElementById("logout-btn").addEventListener("click", logout);
+	document.getElementById("logout-btn").addEventListener("click", logout);
 
+<<<<<<< HEAD
   /* ── Account settings button ───────────────────────────────────────── */
 
   document.getElementById("account-btn").addEventListener("click", showAccountPanel);
@@ -865,32 +886,35 @@ function wireEvents() {
   });
 
   /* ── New list form submit ──────────────────────────────────────────── */
+=======
+	/* ── New list form submit ──────────────────────────────────────────── */
+>>>>>>> adae53b (Update 8080 to 8010)
 
-  document.getElementById("new-list-form").addEventListener("submit", async e => {
-    e.preventDefault();
-    clearListsError();
+	document.getElementById("new-list-form").addEventListener("submit", async e => {
+		e.preventDefault();
+		clearListsError();
 
-    const input = document.getElementById("new-list-name");
-    const name  = input.value.trim();
-    if (!name) return;
+		const input = document.getElementById("new-list-name");
+		const name = input.value.trim();
+		if (!name) return;
 
-    await createList(name);
-    input.value = ""; // clear the input after submission
-  });
+		await createList(name);
+		input.value = ""; // clear the input after submission
+	});
 
-  /* ── New item form submit ──────────────────────────────────────────── */
+	/* ── New item form submit ──────────────────────────────────────────── */
 
-  document.getElementById("new-item-form").addEventListener("submit", async e => {
-    e.preventDefault();
-    clearItemsError();
+	document.getElementById("new-item-form").addEventListener("submit", async e => {
+		e.preventDefault();
+		clearItemsError();
 
-    const input = document.getElementById("new-item-name");
-    const name  = input.value.trim();
-    if (!name) return;
+		const input = document.getElementById("new-item-name");
+		const name = input.value.trim();
+		if (!name) return;
 
-    await createItem(name);
-    input.value = ""; // clear the input after submission
-  });
+		await createItem(name);
+		input.value = ""; // clear the input after submission
+	});
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -899,21 +923,21 @@ function wireEvents() {
    ═══════════════════════════════════════════════════════════════════════ */
 
 (function init() {
-  // Attach all event listeners
-  wireEvents();
+	// Attach all event listeners
+	wireEvents();
 
-  // Check if the user already has a valid session persisted in localStorage.
-  const token = getToken();
-  const email = localStorage.getItem(STORAGE_USER_EMAIL);
+	// Check if the user already has a valid session persisted in localStorage.
+	const token = getToken();
+	const email = localStorage.getItem(STORAGE_USER_EMAIL);
 
-  if (token && email) {
-    // Session found — go straight to the app and load their lists.
-    // If the token is expired, apiFetch will automatically refresh it on
-    // the first API call; if refresh also fails the user will be logged out.
-    showApp(email);
-    loadLists();
-  } else {
-    // No session — show the login/register screen.
-    showAuth();
-  }
+	if (token && email) {
+		// Session found — go straight to the app and load their lists.
+		// If the token is expired, apiFetch will automatically refresh it on
+		// the first API call; if refresh also fails the user will be logged out.
+		showApp(email);
+		loadLists();
+	} else {
+		// No session — show the login/register screen.
+		showAuth();
+	}
 })();
