@@ -1,0 +1,571 @@
+/*
+  styles.css — All visual styling for the TodoList frontend.
+
+  Organisation:
+    1. CSS custom properties (design tokens)
+    2. Global reset / base styles
+    3. Utility classes
+    4. Auth section (login / register card)
+    5. App layout  (header, sidebar, main panel)
+    6. Todo list items in the sidebar
+    7. Todo items in the main panel
+    8. Shared form elements (inputs, buttons)
+    9. Responsive adjustments (narrow screens)
+*/
+
+/* ─────────────────────────────────────────────────────────────
+   1. DESIGN TOKENS
+   Central place to change colours, spacing, and type scale.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  /* Colour palette */
+  --color-bg:           #f0f2f5;
+  --color-surface:      #ffffff;
+  --color-surface-alt:  #f8f9fb;
+  --color-border:       #e2e5ea;
+  --color-primary:      #4f6ef7;
+  --color-primary-dark: #3a56d4;
+  --color-danger:       #e84040;
+  --color-danger-dark:  #c62828;
+  --color-text:         #1a1d23;
+  --color-text-muted:   #6b7280;
+  --color-success:      #22c55e;
+
+  /* Spacing */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  40px;
+
+  /* Typography */
+  --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.375rem;
+  --text-2xl:  1.75rem;
+
+  /* Misc */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+  --transition: 150ms ease;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   2. GLOBAL RESET & BASE
+   ───────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   3. UTILITY CLASSES
+   ───────────────────────────────────────────────────────────── */
+
+/* Hides any element — toggled by JavaScript to show/hide views */
+.hidden {
+  display: none !important;
+}
+
+/* Red error banner shown below forms or section headers */
+.error-msg {
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  background: #fff0f0;
+  border: 1px solid #fca5a5;
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   4. AUTH SECTION
+   Full-screen centred card for login and register forms.
+   ───────────────────────────────────────────────────────────── */
+#auth-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+}
+
+/* White card that wraps both forms */
+.auth-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-xl) var(--space-lg);
+  width: 100%;
+  max-width: 420px;
+}
+
+/* Large brand name at the top of the card */
+.auth-title {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+/* Form headings (Sign In / Create Account) */
+.auth-card h2 {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  margin-bottom: var(--space-lg);
+}
+
+/* Stacks label + input pairs vertically with consistent spacing */
+.auth-card form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.auth-card label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+/* "Don't have an account? Register" prompt below the submit button */
+.toggle-text {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-top: var(--space-sm);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   5. APP LAYOUT
+   Full-viewport layout:  fixed header + scrollable body below it.
+   The body splits into a fixed-width sidebar and a flexible main panel.
+   ───────────────────────────────────────────────────────────── */
+#app-section {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* TOP HEADER BAR */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-lg);
+  height: 56px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  /* Stays at top while body area scrolls */
+  flex-shrink: 0;
+}
+
+.app-logo {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* Groups the email label and logout button on the right */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.user-email {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* BODY: sidebar + main side by side, takes remaining viewport height */
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden; /* children manage their own scroll */
+}
+
+/* ─────────────────────────────────────────────────────────────
+   6. SIDEBAR — todo list management
+   ───────────────────────────────────────────────────────────── */
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-md);
+  overflow-y: auto;
+  gap: var(--space-sm);
+}
+
+.sidebar-header h2 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-sm);
+}
+
+/* The <ul> that holds list items — no default bullet styling */
+.lists-container {
+  list-style: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* A single todo-list entry in the sidebar */
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.list-item:hover {
+  background: var(--color-surface-alt);
+}
+
+/* Highlighted when this list is currently selected */
+.list-item.active {
+  background: #eef1fe;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* List name label — takes up remaining space */
+.list-item-name {
+  flex: 1;
+  font-size: var(--text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Inline form at the bottom of the sidebar to add a new list */
+.new-list-form {
+  display: flex;
+  gap: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+  margin-top: auto;
+}
+
+.new-list-form input {
+  flex: 1;
+  min-width: 0; /* prevents flex overflow */
+}
+
+/* ─────────────────────────────────────────────────────────────
+   7. MAIN PANEL — todo item management
+   ───────────────────────────────────────────────────────────── */
+.main-panel {
+  flex: 1;
+  padding: var(--space-lg);
+  overflow-y: auto;
+}
+
+/* Shown when no list is selected */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+}
+
+/* Title of the currently selected list */
+.list-title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+}
+
+/* Inline form at the top of the main panel to add a new item */
+.new-item-form {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.new-item-form input {
+  flex: 1;
+}
+
+/* The <ul> of todo items — no default bullet styling */
+.items-container {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* A single todo item row */
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  transition: opacity var(--transition);
+}
+
+/* Completed items appear faded and their name gets a strikethrough */
+.item.completed {
+  opacity: 0.6;
+}
+
+.item.completed .item-name {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+/* The circular checkbox that toggles completed state */
+.item-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-success);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Item name — takes all remaining space */
+.item-name {
+  flex: 1;
+  font-size: var(--text-base);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   8. SHARED FORM ELEMENTS
+   ───────────────────────────────────────────────────────────── */
+
+/* Text / email / password inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-surface);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.15);
+}
+
+/* BASE BUTTON — shared across all buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+/* Primary — blue, used for submit actions */
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-dark);
+}
+
+/* Secondary — light, used for non-destructive actions like Logout */
+.btn-secondary {
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+  background: var(--color-border);
+}
+
+/* Danger — red, used for delete actions */
+.btn-danger {
+  background: transparent;
+  color: var(--color-danger);
+  border: 1px solid transparent;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.btn-danger:hover {
+  background: #fff0f0;
+  border-color: #fca5a5;
+}
+
+/* Small variant — used inside compact forms */
+.btn-sm {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-sm);
+}
+
+/* Link-style button — used for "Sign In / Register" toggles */
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: inherit;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  text-decoration: underline;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   9. RESPONSIVE — narrow screens (≤ 600 px)
+   Stack the sidebar above the main panel instead of side-by-side.
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .app-body {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    /* Limit height so the main panel is still visible */
+    max-height: 40vh;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   10. ACCOUNT SETTINGS PANEL
+   ───────────────────────────────────────────────────────────── */
+
+/* Full-screen overlay */
+.account-panel {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.account-panel.hidden {
+  display: none;
+}
+
+/* Card inside the overlay */
+.account-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.account-card h2 {
+  margin: 0 0 4px;
+  font-size: var(--text-xl);
+  color: var(--color-text);
+}
+
+.account-card h3 {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--color-text);
+}
+
+.account-divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 4px 0;
+}
+
+.delete-warning {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.delete-account-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-close-btn {
+  align-self: flex-end;
+}
+
+/* Success message banner (green) */
+.success-msg {
+  padding: 10px 14px;
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+/* Inline rename input inside list items */
+.list-item-rename-input {
+  flex: 1;
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+  padding: 2px 6px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-width: 0;
+}
