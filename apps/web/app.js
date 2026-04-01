@@ -272,6 +272,49 @@ async function logout() {
    ═══════════════════════════════════════════════════════════════════════ */
 
 /**
+ * Update the logged-in user's email and password.
+ *
+ * Calls PUT /api/users. The current email is read from localStorage so no
+ * GET /api/users call is needed.
+ *
+ * @param {string} email    - New email address
+ * @param {string} password - New password (plain text; hashed on the server)
+ * @returns {Promise<string|null>} Error message string, or null on success.
+ */
+async function updateUser(email, password) {
+  const { ok, data } = await apiFetch("/users", "PUT", { email, password });
+
+  if (!ok) {
+    return data?.error || "Could not update account.";
+  }
+
+  // Keep the stored email in sync with the new value
+  localStorage.setItem(STORAGE_USER_EMAIL, data.email);
+  document.getElementById("user-email").textContent = data.email;
+  return null;
+}
+
+/**
+ * Permanently delete the logged-in user's account.
+ *
+ * Calls DELETE /api/users, then logs the user out.
+ *
+ * @returns {Promise<string|null>} Error message string, or null on success.
+ */
+async function deleteUser() {
+  const { ok, data } = await apiFetch("/users", "DELETE");
+
+  if (!ok) {
+    return data?.error || "Could not delete account.";
+  }
+
+  // Account deleted — clear session and return to auth screen
+  await logout();
+  return null;
+}
+
+
+/**
  * Fetch all todo lists for the logged-in user from GET /api/lists,
  * then re-render the sidebar.
  */
@@ -341,9 +384,38 @@ async function deleteList(listId) {
   renderLists();
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   ITEM FUNCTIONS
-   ═══════════════════════════════════════════════════════════════════════ */
+/**
+ * Rename a todo list.
+ *
+ * Calls PUT /api/lists with the list's id and new name, then updates local
+ * state and re-renders the sidebar.
+ *
+ * @param {string} listId  - UUID of the list to rename
+ * @param {string} newName - The new display name
+ */
+async function renameList(listId, newName) {
+  const { ok, data } = await apiFetch("/lists", "PUT", { id: listId, name: newName });
+
+  if (!ok) {
+    showListsError(data?.error || "Could not rename list.");
+    return;
+  }
+
+  // Update the name in local state
+  const list = state.lists.find(l => l.id === listId);
+  if (list) {
+    list.name = data.name;
+  }
+
+  // If this list is currently selected, update the panel title too
+  if (state.selectedListId === listId) {
+    document.getElementById("selected-list-name").textContent = data.name;
+  }
+
+  renderLists();
+}
+
+
 
 /**
  * Fetch all items for a given list from GET /api/items?list_id=<id>,
@@ -458,6 +530,18 @@ function renderLists() {
     nameSpan.className = "list-item-name";
     nameSpan.textContent = list.name;
 
+    // Inline rename input — shown when the user clicks the rename button
+    const renameInput = document.createElement("input");
+    renameInput.type      = "text";
+    renameInput.className = "list-item-rename-input hidden";
+    renameInput.value     = list.name;
+    renameInput.setAttribute("aria-label", `Rename list "${list.name}"`);
+
+    const renameBtn = document.createElement("button");
+    renameBtn.className = "btn btn-secondary btn-sm";
+    renameBtn.setAttribute("aria-label", `Rename list "${list.name}"`);
+    renameBtn.textContent = "✎";
+
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "btn btn-danger btn-sm";
     deleteBtn.setAttribute("aria-label", `Delete list "${list.name}"`);
@@ -466,6 +550,32 @@ function renderLists() {
     // Clicking the name selects the list
     nameSpan.addEventListener("click", () => selectList(list.id, list.name));
 
+    // Clicking ✎ switches to rename mode
+    renameBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      nameSpan.classList.add("hidden");
+      renameBtn.classList.add("hidden");
+      renameInput.classList.remove("hidden");
+      renameInput.focus();
+      renameInput.select();
+    });
+
+    // Confirm rename on Enter or blur
+    const commitRename = async () => {
+      const newName = renameInput.value.trim();
+      renameInput.classList.add("hidden");
+      nameSpan.classList.remove("hidden");
+      renameBtn.classList.remove("hidden");
+      if (newName && newName !== list.name) {
+        await renameList(list.id, newName);
+      }
+    };
+    renameInput.addEventListener("blur", commitRename);
+    renameInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); renameInput.blur(); }
+      if (e.key === "Escape") { renameInput.value = list.name; renameInput.blur(); }
+    });
+
     // Clicking ✕ deletes the list (stop propagation so it doesn't also select it)
     deleteBtn.addEventListener("click", e => {
       e.stopPropagation();
@@ -473,6 +583,8 @@ function renderLists() {
     });
 
     li.appendChild(nameSpan);
+    li.appendChild(renameInput);
+    li.appendChild(renameBtn);
     li.appendChild(deleteBtn);
     container.appendChild(li);
   });
@@ -620,6 +732,39 @@ function clearItemsError() {
   document.getElementById("items-error").classList.add("hidden");
 }
 
+function showAccountError(msg) {
+  const el = document.getElementById("account-error");
+  el.textContent = msg;
+  el.classList.remove("hidden");
+  document.getElementById("account-success").classList.add("hidden");
+}
+function showAccountSuccess(msg) {
+  const el = document.getElementById("account-success");
+  el.textContent = msg;
+  el.classList.remove("hidden");
+  document.getElementById("account-error").classList.add("hidden");
+}
+function clearAccountMessages() {
+  document.getElementById("account-error").classList.add("hidden");
+  document.getElementById("account-success").classList.add("hidden");
+}
+
+/** Open the account settings panel and pre-populate the email field. */
+function showAccountPanel() {
+  const email = localStorage.getItem(STORAGE_USER_EMAIL) || "";
+  document.getElementById("update-email").value = email;
+  document.getElementById("update-password").value = "";
+  document.getElementById("update-confirm").value = "";
+  clearAccountMessages();
+  document.getElementById("account-panel").classList.remove("hidden");
+}
+
+/** Close the account settings panel. */
+function hideAccountPanel() {
+  document.getElementById("account-panel").classList.add("hidden");
+  clearAccountMessages();
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
    EVENT WIRING
    Attach DOM event listeners to form submits and buttons.
@@ -678,6 +823,46 @@ function wireEvents() {
   /* ── Logout button ─────────────────────────────────────────────────── */
 
   document.getElementById("logout-btn").addEventListener("click", logout);
+
+  /* ── Account settings button ───────────────────────────────────────── */
+
+  document.getElementById("account-btn").addEventListener("click", showAccountPanel);
+  document.getElementById("close-account-btn").addEventListener("click", hideAccountPanel);
+
+  /* ── Update user form submit ───────────────────────────────────────── */
+
+  document.getElementById("update-user-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    clearAccountMessages();
+
+    const email    = document.getElementById("update-email").value.trim();
+    const password = document.getElementById("update-password").value;
+    const confirm  = document.getElementById("update-confirm").value;
+
+    if (password !== confirm) {
+      showAccountError("Passwords do not match.");
+      return;
+    }
+
+    const error = await updateUser(email, password);
+    if (error) {
+      showAccountError(error);
+    } else {
+      showAccountSuccess("Account updated successfully.");
+      document.getElementById("update-password").value = "";
+      document.getElementById("update-confirm").value  = "";
+    }
+  });
+
+  /* ── Delete account button ─────────────────────────────────────────── */
+
+  document.getElementById("delete-account-btn").addEventListener("click", async () => {
+    if (!confirm("Are you sure you want to delete your account? This cannot be undone.")) {
+      return;
+    }
+    const error = await deleteUser();
+    if (error) showAccountError(error);
+  });
 
   /* ── New list form submit ──────────────────────────────────────────── */
 

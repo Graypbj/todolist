@@ -89,10 +89,53 @@
       <div class="header-right">
         <!-- Populated by JS with the user's email -->
         <span id="user-email" class="user-email"></span>
+        <!-- Opens the account settings panel -->
+        <button id="account-btn" class="btn btn-secondary">Account</button>
         <!-- Clicking logout clears stored tokens and returns to auth view -->
         <button id="logout-btn" class="btn btn-secondary">Logout</button>
       </div>
     </header>
+
+    <!-- ACCOUNT SETTINGS PANEL
+         Hidden by default; shown when the user clicks the "Account" button.
+         Lets the user update their email/password or delete their account. -->
+    <div id="account-panel" class="account-panel hidden">
+      <div class="account-card">
+        <h2>Account Settings</h2>
+
+        <!-- Error/success banners -->
+        <p id="account-error" class="error-msg hidden"></p>
+        <p id="account-success" class="success-msg hidden"></p>
+
+        <!-- UPDATE EMAIL / PASSWORD FORM
+             Pre-populated with the stored email; calls PUT /api/users -->
+        <form id="update-user-form">
+          <h3>Update Email / Password</h3>
+          <label for="update-email">New Email</label>
+          <input id="update-email" type="email" required />
+
+          <label for="update-password">New Password</label>
+          <input id="update-password" type="password" placeholder="••••••••" required />
+
+          <label for="update-confirm">Confirm Password</label>
+          <input id="update-confirm" type="password" placeholder="••••••••" required />
+
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+
+        <hr class="account-divider" />
+
+        <!-- DELETE ACCOUNT
+             Calls DELETE /api/users then logs the user out -->
+        <div class="delete-account-section">
+          <h3>Delete Account</h3>
+          <p class="delete-warning">This action is permanent and cannot be undone.</p>
+          <button id="delete-account-btn" class="btn btn-danger">Delete My Account</button>
+        </div>
+
+        <button id="close-account-btn" class="btn btn-secondary account-close-btn">Close</button>
+      </div>
+    </div>
 
     <div class="app-body">
 
